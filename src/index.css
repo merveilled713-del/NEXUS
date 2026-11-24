@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html,
+  body {
+    background-color: #050814;
+    color: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+/* NEXUS Étape 5 — Compositor-only keyframe animations (transform & opacity) */
+@keyframes nexus-burst-expand {
+  0% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.42);
+  }
+}
+
+@keyframes nexus-spin-cw {
+  0% {
+    opacity: 0.15;
+    transform: rotate(0deg) scale(0.75);
+  }
+  30% {
+    opacity: 1;
+    transform: rotate(105deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(240deg) scale(1.18);
+  }
+}
+
+@keyframes nexus-spin-ccw {
+  0% {
+    opacity: 0.15;
+    transform: rotate(0deg) scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: rotate(-120deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-270deg) scale(1.2);
+  }
+}
+
+@keyframes nexus-ember-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.7);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-48px) scale(0.85);
+  }
+}
+
+@keyframes nexus-shock-snap {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.36);
+  }
+}
+
+@keyframes nexus-label-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  22% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@keyframes nexus-deal-cascade {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.82);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(1.06);
+  }
+}
+
+.nexus-anim-burst {
+  animation: nexus-burst-expand var(--nexus-dur, 340ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nexus-anim-spin-cw {
+  animation: nexus-spin-cw var(--nexus-dur, 420ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nexus-anim-spin-ccw {
+  animation: nexus-spin-ccw var(--nexus-dur, 460ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nexus-anim-ember {
+  animation: nexus-ember-rise var(--nexus-dur, 340ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nexus-anim-shock {
+  animation: nexus-shock-snap var(--nexus-dur, 480ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nexus-anim-label {
+  animation: nexus-label-pop var(--nexus-dur, 420ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nexus-anim-deal {
+  animation: nexus-deal-cascade var(--nexus-dur, 520ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

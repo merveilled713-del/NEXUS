@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS",
+  "description": "Jeu de cartes stratégique néo-futuriste — 6 familles, valeurs 0 à 9, cartes spéciales et moteur tactique.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

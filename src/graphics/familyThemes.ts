@@ -1,0 +1,95 @@
+import { FAMILIES_BY_ID } from '../catalog/families';
+import type { FamilyId } from '../catalog/types';
+import type { FamilyVisualTheme, ThemeKey } from './graphicsTypes';
+
+export const FAMILY_VISUAL_THEMES: Readonly<Record<ThemeKey, FamilyVisualTheme>> =
+  Object.freeze({
+    AUBE: Object.freeze({
+      themeKey: 'AUBE',
+      displayName: FAMILIES_BY_ID.AUBE.displayName,
+      primaryColor: FAMILIES_BY_ID.AUBE.primaryColor,
+      secondaryColor: FAMILIES_BY_ID.AUBE.secondaryColor,
+      chassisPrimary: '#D4A13E',
+      chassisSecondary: '#F8DF9C',
+      chassisDark: '#261A08',
+      accentHighlight: '#FEF3C7',
+      glowColor: 'rgba(245, 158, 11, 0.55)',
+      patternId: 'SOLAR_RAYS',
+    }),
+    BRAISE: Object.freeze({
+      themeKey: 'BRAISE',
+      displayName: FAMILIES_BY_ID.BRAISE.displayName,
+      primaryColor: FAMILIES_BY_ID.BRAISE.primaryColor,
+      secondaryColor: FAMILIES_BY_ID.BRAISE.secondaryColor,
+      chassisPrimary: '#C84B31',
+      chassisSecondary: '#FB923C',
+      chassisDark: '#260B08',
+      accentHighlight: '#FED7AA',
+      glowColor: 'rgba(239, 68, 68, 0.55)',
+      patternId: 'EMBER_CHEVRONS',
+    }),
+    ONDE: Object.freeze({
+      themeKey: 'ONDE',
+      displayName: FAMILIES_BY_ID.ONDE.displayName,
+      primaryColor: FAMILIES_BY_ID.ONDE.primaryColor,
+      secondaryColor: FAMILIES_BY_ID.ONDE.secondaryColor,
+      chassisPrimary: '#1D74B8',
+      chassisSecondary: '#67E8F9',
+      chassisDark: '#07182B',
+      accentHighlight: '#CFFAFE',
+      glowColor: 'rgba(6, 182, 212, 0.55)',
+      patternId: 'WAVE_ARCS',
+    }),
+    OMBRE: Object.freeze({
+      themeKey: 'OMBRE',
+      displayName: FAMILIES_BY_ID.OMBRE.displayName,
+      primaryColor: FAMILIES_BY_ID.OMBRE.primaryColor,
+      secondaryColor: FAMILIES_BY_ID.OMBRE.secondaryColor,
+      chassisPrimary: '#6D5BD0',
+      chassisSecondary: '#C4B5FD',
+      chassisDark: '#120C28',
+      accentHighlight: '#EDE9FE',
+      glowColor: 'rgba(139, 92, 246, 0.55)',
+      patternId: 'ECLIPSE_RINGS',
+    }),
+    ECLAIR: Object.freeze({
+      themeKey: 'ECLAIR',
+      displayName: FAMILIES_BY_ID.ECLAIR.displayName,
+      primaryColor: FAMILIES_BY_ID.ECLAIR.primaryColor,
+      secondaryColor: FAMILIES_BY_ID.ECLAIR.secondaryColor,
+      chassisPrimary: '#7CB9E8',
+      chassisSecondary: '#E0F2FE',
+      chassisDark: '#0B1D33',
+      accentHighlight: '#F0F9FF',
+      glowColor: 'rgba(56, 189, 248, 0.55)',
+      patternId: 'VOLT_GRID',
+    }),
+    CRISTAL: Object.freeze({
+      themeKey: 'CRISTAL',
+      displayName: FAMILIES_BY_ID.CRISTAL.displayName,
+      primaryColor: FAMILIES_BY_ID.CRISTAL.primaryColor,
+      secondaryColor: FAMILIES_BY_ID.CRISTAL.secondaryColor,
+      chassisPrimary: '#1D9A78',
+      chassisSecondary: '#A7F3D0',
+      chassisDark: '#07221B',
+      accentHighlight: '#D1FAE5',
+      glowColor: 'rgba(16, 185, 129, 0.55)',
+      patternId: 'PRISM_FACETS',
+    }),
+    UNIVERSAL: Object.freeze({
+      themeKey: 'UNIVERSAL',
+      displayName: 'Nexus Universel',
+      primaryColor: '#38BDF8',
+      secondaryColor: '#D4A13E',
+      chassisPrimary: '#8DA2C8',
+      chassisSecondary: '#F3D58D',
+      chassisDark: '#0A0F24',
+      accentHighlight: '#F8FAFC',
+      glowColor: 'rgba(125, 211, 252, 0.52)',
+      patternId: 'NEXUS_PRISM',
+    }),
+  });
+
+export function getThemeForFamily(family: FamilyId | null): FamilyVisualTheme {
+  return family === null ? FAMILY_VISUAL_THEMES.UNIVERSAL : FAMILY_VISUAL_THEMES[family];
+}
