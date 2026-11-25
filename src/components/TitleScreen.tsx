@@ -3,6 +3,13 @@ import { BookOpen, Grid, Play, Settings, SlidersHorizontal, Trophy } from 'lucid
 import { NexusCard } from '../graphics';
 import { getPlayerLevelInfo } from '../progression/progressionStore';
 import type { AppScreen, NexusProgressionStats } from '../types/app';
+import {
+  NexusBackdrop,
+  NexusChamferButton,
+  NexusChromePanel,
+  NexusLogoSvg,
+  useNexusUi,
+} from './ui';
 
 export interface TitleScreenProps {
   readonly glowEnabled: boolean;
@@ -17,193 +24,276 @@ export function TitleScreen({
   onQuickStartSolo,
   onNavigate,
 }: TitleScreenProps): React.ReactElement {
+  const { animationLevel, tableTheme } = useNexusUi();
   const levelInfo = getPlayerLevelInfo(stats.xp);
+  const isOff = animationLevel === 'OFF';
+  const showDaisGlow = glowEnabled && !isOff;
+
+  const secondaryLinks: ReadonlyArray<{
+    readonly screen: AppScreen;
+    readonly label: string;
+    readonly detail: string;
+    readonly accent: string;
+    readonly icon: React.ComponentType<{ className?: string }>;
+  }> = [
+    {
+      screen: 'COLLECTION',
+      label: 'Collection',
+      detail: '80 variantes',
+      accent: '#38BDF8',
+      icon: Grid,
+    },
+    {
+      screen: 'RULES',
+      label: 'Règles',
+      detail: 'Système & pouvoirs',
+      accent: '#F59E0B',
+      icon: BookOpen,
+    },
+    {
+      screen: 'STATS',
+      label: 'Statistiques',
+      detail: `Niveau ${levelInfo.level} · Bilan`,
+      accent: '#10B981',
+      icon: Trophy,
+    },
+    {
+      screen: 'SETTINGS',
+      label: 'Paramètres',
+      detail: 'Audio & effets',
+      accent: '#A78BFA',
+      icon: Settings,
+    },
+  ];
 
   return (
-    <div className="relative flex min-h-screen flex-col justify-between overflow-x-hidden bg-[#050814] text-slate-100">
-      {/* Orbital background geometry */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <svg
-          viewBox="0 0 1440 900"
-          className="h-full w-full opacity-35"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <defs>
-            <radialGradient id="nexus-title-glow" cx="65%" cy="45%" r="55%">
-              <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.22" />
-              <stop offset="48%" stopColor="#1E1B4B" stopOpacity="0.14" />
-              <stop offset="100%" stopColor="#050814" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <rect width="1440" height="900" fill="url(#nexus-title-glow)" />
-          <circle cx="960" cy="430" r="340" fill="none" stroke="#1E293B" strokeWidth="1.2" />
-          <circle
-            cx="960"
-            cy="430"
-            r="250"
-            fill="none"
-            stroke="#38BDF8"
-            strokeWidth="1"
-            strokeOpacity="0.28"
-            strokeDasharray="10 12"
-          />
-          <circle
-            cx="960"
-            cy="430"
-            r="430"
-            fill="none"
-            stroke="#F59E0B"
-            strokeWidth="0.9"
-            strokeOpacity="0.18"
-          />
-        </svg>
-      </div>
+    <div className="relative flex min-h-screen flex-col justify-between overflow-x-hidden bg-[#030612] text-slate-100">
+      <NexusBackdrop
+        variant="hero"
+        tableTheme={tableTheme}
+        glowEnabled={glowEnabled}
+        animationLevel={animationLevel}
+      />
 
-      {/* Main Title Stage */}
-      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-6 py-10 lg:py-14">
-        <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-12">
-          {/* Left Negative-Space Lockup + Primary CTAs */}
-          <div className="space-y-8 lg:col-span-6">
+      {/* Rail supérieur discret d'identité et de progression réelle */}
+      <header className="relative z-10 border-b border-slate-800/70 bg-[#040816]/75 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <NexusLogoSvg
+              size="compact"
+              glowEnabled={glowEnabled}
+              animationLevel={animationLevel}
+            />
+            <span className="text-[11px] font-bold tracking-[0.22em] text-[#F5DEB3] uppercase">
+              Édition Solo Officielle
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300 tabular-nums">
+            <span className="font-semibold text-sky-300">
+              Niveau {levelInfo.level} · {levelInfo.title}
+            </span>
+            <span className="text-slate-600" aria-hidden="true">
+              /
+            </span>
+            <span>{stats.gamesWon} victoire(s) Solo</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Scène principale asymétrique */}
+      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-4 py-8 sm:px-6 lg:py-10">
+        <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-8">
+          {/* Colonne gauche : Identité, commandes principales et accès secondaires */}
+          <div className="space-y-7 lg:col-span-6">
             <div className="space-y-4">
-              {/* Bespoke inline SVG Title Lockup featuring the Infinity Nexus emblem */}
               <div className="flex items-center gap-4">
-                <svg
-                  viewBox="0 0 96 56"
-                  className="h-11 w-20 shrink-0"
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <linearGradient id="nexus-inf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#F59E0B" />
-                      <stop offset="50%" stopColor="#38BDF8" />
-                      <stop offset="100%" stopColor="#10B981" />
-                    </linearGradient>
-                  </defs>
-                  <polygon
-                    points="14,6 82,6 92,28 82,50 14,50 4,28"
-                    fill="#091128"
-                    stroke="#334155"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M 28,20 C 18,20 14,24 14,28 C 14,32 18,36 28,36 C 38,36 58,20 68,20 C 78,20 82,24 82,28 C 82,32 78,36 68,36 C 58,36 38,20 28,20 Z"
-                    fill="none"
-                    stroke="url(#nexus-inf-grad)"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="text-xs font-semibold tracking-[0.22em] text-sky-300 uppercase">
-                  Jeu de cartes néo-futuriste
-                </span>
+                <NexusLogoSvg
+                  size="hero"
+                  glowEnabled={glowEnabled}
+                  animationLevel={animationLevel}
+                />
+                <div className="space-y-1">
+                  <div className="text-[11px] font-bold tracking-[0.24em] text-sky-300 uppercase">
+                    6 Familles · Valeurs 0–9 · Cartes Spéciales
+                  </div>
+                  <div className="h-[2px] w-28 bg-gradient-to-r from-[#F5DEB3] via-sky-400 to-transparent" />
+                </div>
               </div>
 
-              <h1 className="font-['Outfit'] text-5xl font-extrabold tracking-[0.12em] text-white sm:text-6xl">
+              <h1 className="font-['Outfit'] text-5xl font-extrabold tracking-[0.16em] nexus-title-metallic sm:text-6xl lg:text-7xl">
                 NEXUS
               </h1>
 
-              <p className="max-w-xl text-base leading-relaxed text-slate-300">
-                Maîtrisez les six familles cosmiques, enchaînez valeurs numériques et cartes
-                spéciales rares, et déjouez l’intelligence artificielle en mode Solo.
+              <p className="max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
+                Maîtrisez les six familles cosmiques, enchaînez valeurs numériques de 0 à 9 et
+                cartes spéciales rares, et déjouez l’intelligence artificielle en mode Solo.
               </p>
-
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 tabular-nums">
-                <span>6 familles</span>
-                <span aria-hidden="true">·</span>
-                <span>80 variantes officielles</span>
-                <span aria-hidden="true">·</span>
-                <span>
-                  Niveau {levelInfo.level} · {levelInfo.title}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>{stats.gamesWon} victoire(s) Solo</span>
-              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                type="button"
+            {/* Commandes principales */}
+            <div className="flex flex-wrap items-center gap-3.5">
+              <NexusChamferButton
+                variant="primary"
                 data-start="true"
                 onClick={onQuickStartSolo}
-                className="inline-flex items-center gap-2.5 rounded-xl bg-sky-400 px-6 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-sky-500/20 transition-transform duration-150 hover:-translate-y-0.5 hover:bg-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 whitespace-nowrap shrink-0"
+                animationLevel={animationLevel}
               >
                 <Play className="h-4 w-4 fill-current" aria-hidden="true" />
                 <span>Jouer en Solo</span>
-              </button>
+              </NexusChamferButton>
 
-              <button
-                type="button"
+              <NexusChamferButton
+                variant="secondary"
                 onClick={() => onNavigate('SOLO_SETUP')}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-[#0B1226] px-5 py-3.5 text-sm font-semibold text-slate-100 transition-colors hover:border-sky-400/60 hover:text-white whitespace-nowrap shrink-0"
+                animationLevel={animationLevel}
               >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                <SlidersHorizontal className="h-4 w-4 text-[#F5DEB3]" aria-hidden="true" />
                 <span>Configurer la table</span>
-              </button>
+              </NexusChamferButton>
             </div>
 
-            <nav aria-label="Menu secondaire" className="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-4">
-              <button
-                type="button"
-                onClick={() => onNavigate('COLLECTION')}
-                className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-[#0A1022] px-4 py-3 text-left text-xs font-semibold text-slate-200 transition-colors hover:border-slate-600 hover:bg-[#0E1630]"
-              >
-                <Grid className="h-4 w-4 text-sky-400 shrink-0" aria-hidden="true" />
-                <span>Collection</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('RULES')}
-                className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-[#0A1022] px-4 py-3 text-left text-xs font-semibold text-slate-200 transition-colors hover:border-slate-600 hover:bg-[#0E1630]"
-              >
-                <BookOpen className="h-4 w-4 text-amber-400 shrink-0" aria-hidden="true" />
-                <span>Règles</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('STATS')}
-                className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-[#0A1022] px-4 py-3 text-left text-xs font-semibold text-slate-200 transition-colors hover:border-slate-600 hover:bg-[#0E1630]"
-              >
-                <Trophy className="h-4 w-4 text-emerald-400 shrink-0" aria-hidden="true" />
-                <span>Statistiques</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('SETTINGS')}
-                className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-[#0A1022] px-4 py-3 text-left text-xs font-semibold text-slate-200 transition-colors hover:border-slate-600 hover:bg-[#0E1630]"
-              >
-                <Settings className="h-4 w-4 text-violet-400 shrink-0" aria-hidden="true" />
-                <span>Paramètres</span>
-              </button>
+            {/* Grille d'accès aux écrans secondaires */}
+            <nav aria-label="Menu secondaire" className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1">
+              {secondaryLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.screen}
+                    type="button"
+                    onClick={() => onNavigate(item.screen)}
+                    className={`group text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ${
+                      isOff ? '' : 'transition-transform duration-150 hover:-translate-y-0.5'
+                    }`}
+                  >
+                    <NexusChromePanel
+                      tone="chrome"
+                      chamfer="sm"
+                      accentColor={item.accent}
+                      innerClassName="flex min-h-[60px] items-center gap-2.5 px-3 py-3 sm:gap-3 sm:px-4 group-hover:bg-[#0B142C]/95"
+                    >
+                      <span
+                        className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-md border border-slate-700/80 bg-[#040917]"
+                        style={{ color: item.accent }}
+                      >
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-['Outfit'] text-sm font-bold tracking-wide text-white">
+                          {item.label}
+                        </span>
+                        <span className="block truncate text-[11px] text-slate-400">
+                          {item.detail}
+                        </span>
+                      </span>
+                    </NexusChromePanel>
+                  </button>
+                );
+              })}
             </nav>
           </div>
 
-          {/* Right Centerpiece Showcase: Fanned official V2 cards */}
+          {/* Colonne droite : Vitrine orbitale des 3 cartes officielles V2 */}
           <div className="flex items-center justify-center lg:col-span-6">
-            <div className="relative flex items-end justify-center py-6">
-              <div className="-mr-12 origin-bottom -rotate-12 translate-y-4 opacity-90 sm:-mr-10">
-                <NexusCard variantId="BRAISE_IMPULSION" size="md" glowEnabled={glowEnabled} />
-              </div>
-              <div className="z-20 -translate-y-2">
-                <NexusCard
-                  variantId="UNIVERSAL_PORTAIL"
-                  size="lg"
-                  glowEnabled={glowEnabled}
-                  playable
+            <div className="relative flex w-full max-w-[500px] flex-col items-center justify-center py-4 sm:py-6">
+              {/* Socle énergétique orbital en perspective sous les cartes */}
+              <svg
+                viewBox="0 0 460 220"
+                className="pointer-events-none absolute bottom-0 w-full max-w-[440px]"
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="nexus-dais-glow" cx="50%" cy="55%" r="50%">
+                    <stop
+                      offset="0%"
+                      stopColor="#38BDF8"
+                      stopOpacity={showDaisGlow ? 0.34 : 0.08}
+                    />
+                    <stop
+                      offset="55%"
+                      stopColor="#D4A656"
+                      stopOpacity={showDaisGlow ? 0.16 : 0.04}
+                    />
+                    <stop offset="100%" stopColor="#030612" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+                <ellipse cx="230" cy="148" rx="215" ry="62" fill="url(#nexus-dais-glow)" />
+                <ellipse
+                  cx="230"
+                  cy="148"
+                  rx="202"
+                  ry="52"
+                  fill="none"
+                  stroke="#94A3B8"
+                  strokeOpacity="0.34"
+                  strokeWidth="1.2"
                 />
-              </div>
-              <div className="-ml-12 origin-bottom rotate-12 translate-y-4 opacity-90 sm:-ml-10">
-                <NexusCard variantId="ONDE_7" size="md" glowEnabled={glowEnabled} />
+                <ellipse
+                  cx="230"
+                  cy="148"
+                  rx="164"
+                  ry="40"
+                  fill="none"
+                  stroke="#38BDF8"
+                  strokeOpacity={showDaisGlow ? 0.65 : 0.25}
+                  strokeWidth="1.4"
+                  strokeDasharray="16 10"
+                />
+                <ellipse
+                  cx="230"
+                  cy="148"
+                  rx="118"
+                  ry="26"
+                  fill="none"
+                  stroke="#F5DEB3"
+                  strokeOpacity={showDaisGlow ? 0.55 : 0.22}
+                  strokeWidth="1.2"
+                />
+              </svg>
+
+              {/* Éventail maîtrisé de 3 véritables cartes officielles V2 */}
+              <div className="relative z-10 flex items-end justify-center pb-8 pt-2">
+                <div className="-mr-10 origin-bottom -rotate-12 translate-y-3 opacity-95 sm:-mr-12">
+                  <NexusCard
+                    variantId="BRAISE_IMPULSION"
+                    size="md"
+                    glowEnabled={glowEnabled}
+                    className="!w-[104px] sm:!w-[150px]"
+                  />
+                </div>
+                <div className="z-20 -translate-y-3">
+                  <NexusCard
+                    variantId="UNIVERSAL_PORTAIL"
+                    size="lg"
+                    glowEnabled={glowEnabled}
+                    playable={!isOff}
+                    className="!w-[144px] sm:!w-[208px]"
+                  />
+                </div>
+                <div className="-ml-10 origin-bottom rotate-12 translate-y-3 opacity-95 sm:-ml-12">
+                  <NexusCard
+                    variantId="ONDE_7"
+                    size="md"
+                    glowEnabled={glowEnabled}
+                    className="!w-[104px] sm:!w-[150px]"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Single flat control hint line */}
-      <footer className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-6">
-        <p className="text-xs text-slate-500">
-          Entrée / Espace : Lancer la partie Solo · Échap / P : Pause en jeu · M : Couper le son
-        </p>
+      {/* Pied de scène sobre */}
+      <footer className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-5 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/70 pt-3.5 text-xs text-slate-400">
+          <span>
+            Entrée / Espace : Lancer la partie Solo · Échap / P : Pause en jeu · M : Couper le son
+          </span>
+          <span className="text-[11px] tracking-wider text-slate-500 uppercase">
+            Cartes officielles NEXUS V2
+          </span>
+        </div>
       </footer>
     </div>
   );

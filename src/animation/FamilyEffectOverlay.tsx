@@ -1,436 +1,452 @@
 import React from 'react';
-import type { FamilyId } from '../catalog/types';
+import { FAMILIES_BY_ID } from '../catalog/families';
+import type { FamilyId, FamilySpecialCategory } from '../catalog/types';
+import { ActiveSpecialChoreography } from '../components/table/specialAnimationCatalog';
+import { FamilyEmblemGlyph, resolveCardVisualSpec } from '../graphics';
 import type { AnimationLevel } from '../types/app';
-import type { AnimationStep, FamilyAnimationVisualSpec } from './animationTypes';
+import type { AnimationStep } from './animationTypes';
 
 export interface FamilyEffectOverlayProps {
   readonly activeStep: AnimationStep | null;
+  readonly specialChoreography?: ActiveSpecialChoreography | null;
+  readonly targetPlayerName?: string | null;
   readonly level: AnimationLevel;
 }
 
-/**
- * NEXUS — 6 animations familiales dessinées par le code + effets spéciaux (Étape 5).
- * Strictement pointer-events: none. Retourne null quand level === 'OFF' ou sans animation active.
- */
-function renderFamilyPatternSvg(
+function renderFamilyPowerGeometry(
   family: FamilyId,
-  spec: FamilyAnimationVisualSpec,
+  power: FamilySpecialCategory,
+  primary: string,
+  secondary: string,
+  accent: string,
   isReduced: boolean,
 ): React.ReactElement {
-  const particleCount = isReduced ? spec.particleCountReduced : spec.particleCountFull;
-  const rays = Array.from({ length: particleCount }, (_, i) => i);
+  const key = `${family}_${power}` as const;
 
-  switch (family) {
-    case 'AUBE':
-      // Rayons solaires radiaux + double anneau doré
+  switch (key) {
+    case 'AUBE_IMPULSION':
       return (
-        <g className="nexus-anim-burst" style={{ transformOrigin: '160px 160px' }}>
-          <circle
-            cx="160"
-            cy="160"
-            r="68"
-            fill="none"
-            stroke={spec.primaryColor}
-            strokeWidth="3.5"
-            strokeOpacity="0.85"
-          />
-          {!isReduced ? (
-            <circle
-              cx="160"
-              cy="160"
-              r="104"
-              fill="none"
-              stroke={spec.secondaryColor}
-              strokeWidth="2"
-              strokeDasharray="10 8"
-              strokeOpacity="0.7"
-            />
-          ) : null}
-          {rays.map((i) => {
-            const angle = (i * 360) / particleCount;
-            return (
-              <g key={i} transform={`rotate(${angle} 160 160)`}>
-                <line
-                  x1="160"
-                  y1="38"
-                  x2="160"
-                  y2="84"
-                  stroke={i % 2 === 0 ? spec.primaryColor : spec.accentColor}
-                  strokeWidth={i % 2 === 0 ? '4' : '2.2'}
-                  strokeLinecap="round"
-                />
-              </g>
-            );
-          })}
-        </g>
-      );
-
-    case 'BRAISE':
-      // Braises ascendantes + anneau thermique ardent
-      return (
-        <g>
-          <g className="nexus-anim-shock" style={{ transformOrigin: '160px 160px' }}>
-            <circle
-              cx="160"
-              cy="160"
-              r="76"
-              fill="none"
-              stroke={spec.primaryColor}
-              strokeWidth="5"
-              strokeOpacity="0.88"
-            />
-            <polygon
-              points="160,64 236,214 84,214"
-              fill="none"
-              stroke={spec.secondaryColor}
-              strokeWidth="2.5"
-              strokeOpacity="0.72"
-            />
-          </g>
-          <g className="nexus-anim-ember" style={{ transformOrigin: '160px 160px' }}>
-            {rays.map((i) => {
-              const x = 68 + ((i * 37) % 184);
-              const y = 78 + ((i * 53) % 148);
-              const r = i % 3 === 0 ? 5.5 : 3.2;
-              return (
-                <polygon
-                  key={i}
-                  points={`${x},${y - r * 1.8} ${x + r},${y} ${x},${y + r * 1.4} ${x - r},${y}`}
-                  fill={i % 2 === 0 ? spec.primaryColor : spec.accentColor}
-                />
-              );
-            })}
-          </g>
-        </g>
-      );
-
-    case 'ONDE':
-      // Ondes harmoniques concentriques fluides
-      return (
-        <g className="nexus-anim-burst" style={{ transformOrigin: '160px 160px' }}>
-          {Array.from(
-            { length: isReduced ? spec.ringCountReduced : spec.ringCountFull },
-            (_, ring) => (
-              <circle
-                key={ring}
-                cx="160"
-                cy="160"
-                r={46 + ring * 26}
-                fill="none"
-                stroke={ring % 2 === 0 ? spec.primaryColor : spec.secondaryColor}
-                strokeWidth={4 - ring * 0.6}
-                strokeOpacity={0.92 - ring * 0.16}
-              />
-            ),
-          )}
-          <path
-            d="M 42,160 Q 100,118 160,160 T 278,160"
-            fill="none"
-            stroke={spec.accentColor}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          {!isReduced ? (
-            <path
-              d="M 52,182 Q 106,144 160,182 T 268,182"
-              fill="none"
-              stroke={spec.primaryColor}
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeOpacity="0.8"
-            />
-          ) : null}
-        </g>
-      );
-
-    case 'OMBRE':
-      // Vortex gravitationnel en rotation + croissant d'éclipse
-      return (
-        <g className="nexus-anim-spin-ccw" style={{ transformOrigin: '160px 160px' }}>
-          <circle
-            cx="160"
-            cy="160"
-            r="96"
-            fill="none"
-            stroke={spec.primaryColor}
-            strokeWidth="3.5"
-            strokeDasharray="28 14"
-            strokeOpacity="0.85"
-          />
-          <circle
-            cx="160"
-            cy="160"
-            r="64"
-            fill="none"
-            stroke={spec.secondaryColor}
-            strokeWidth="3"
-            strokeDasharray="16 10"
-          />
-          <path
-            d="M 176,104 A 58,58 0 1,0 176,216 A 42,48 0 1,1 176,104 Z"
-            fill={spec.primaryColor}
-            fillOpacity="0.48"
-            stroke={spec.accentColor}
-            strokeWidth="2"
-          />
-        </g>
-      );
-
-    case 'ECLAIR':
-      // Arcs électriques haute tension ramifiés
-      return (
-        <g className="nexus-anim-shock" style={{ transformOrigin: '160px 160px' }}>
-          <circle
-            cx="160"
-            cy="160"
-            r="84"
-            fill="none"
-            stroke={spec.primaryColor}
-            strokeWidth="2.5"
-            strokeOpacity="0.7"
-          />
-          <polyline
-            points="174,40 132,126 172,126 138,278 192,164 150,164"
-            fill="none"
-            stroke={spec.accentColor}
-            strokeWidth="4.5"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
+        <g className="nexus-special-vector" style={{ transformOrigin: '200px 200px' }}>
+          <circle cx="200" cy="200" r="112" fill="none" stroke={primary} strokeWidth="2.5" strokeOpacity="0.65" />
+          <polygon points="200,32 218,136 200,118 182,136" fill={accent} fillOpacity="0.92" />
           {!isReduced ? (
             <>
-              <polyline
-                points="66,96 116,134 98,154 146,184"
-                fill="none"
-                stroke={spec.primaryColor}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <polyline
-                points="254,104 206,138 224,158 182,194"
-                fill="none"
-                stroke={spec.secondaryColor}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
+              <polygon points="122,74 176,144 156,148" fill={secondary} fillOpacity="0.82" />
+              <polygon points="278,74 244,148 224,144" fill={secondary} fillOpacity="0.82" />
+              <circle cx="200" cy="200" r="144" fill="none" stroke={secondary} strokeWidth="1.5" strokeDasharray="14 10" />
             </>
           ) : null}
         </g>
       );
 
-    case 'CRISTAL':
-      // Facettes géométriques d'octaèdre rotatives
+    case 'AUBE_INVERSION':
       return (
-        <g className="nexus-anim-spin-cw" style={{ transformOrigin: '160px 160px' }}>
+        <g>
+          <g className="nexus-anim-spin-cw" style={{ transformOrigin: '200px 200px' }}>
+            <circle cx="200" cy="200" r="126" fill="none" stroke={primary} strokeWidth="3.5" strokeDasharray="34 14" />
+            {[0, 90, 180, 270].map((deg) => (
+              <polygon
+                key={deg}
+                points="200,56 212,78 188,78"
+                fill={accent}
+                transform={`rotate(${deg} 200 200)`}
+              />
+            ))}
+          </g>
+          {!isReduced ? (
+            <g className="nexus-anim-spin-ccw" style={{ transformOrigin: '200px 200px' }}>
+              <circle cx="200" cy="200" r="94" fill="none" stroke={secondary} strokeWidth="2.5" strokeDasharray="20 12" />
+            </g>
+          ) : null}
+        </g>
+      );
+
+    case 'AUBE_BOUCLIER':
+      return (
+        <g className="nexus-special-lock" style={{ transformOrigin: '200px 200px' }}>
           <polygon
-            points="160,44 252,160 160,276 68,160"
-            fill="none"
-            stroke={spec.primaryColor}
+            points="200,54 314,109 342,232 263,332 137,332 58,232 86,109"
+            fill={primary}
+            fillOpacity="0.12"
+            stroke={primary}
             strokeWidth="4"
           />
           <polygon
-            points="160,78 220,160 160,242 100,160"
-            fill={spec.primaryColor}
-            fillOpacity="0.18"
-            stroke={spec.accentColor}
-            strokeWidth="2.5"
+            points="200,82 292,126 314,224 250,304 150,304 86,224 108,126"
+            fill="none"
+            stroke={accent}
+            strokeWidth="2"
           />
-          <line x1="160" y1="44" x2="160" y2="276" stroke={spec.secondaryColor} strokeWidth="2" />
-          <line x1="68" y1="160" x2="252" y2="160" stroke={spec.secondaryColor} strokeWidth="2" />
+          {!isReduced ? (
+            <circle cx="200" cy="200" r="56" fill="none" stroke={secondary} strokeWidth="2.5" strokeDasharray="8 8" />
+          ) : null}
+        </g>
+      );
+
+    case 'BRAISE_IMPULSION':
+      return (
+        <g>
+          <g className="nexus-special-vector" style={{ transformOrigin: '200px 200px' }}>
+            <polygon points="200,34 250,152 200,124 150,152" fill={primary} fillOpacity="0.72" stroke={accent} strokeWidth="2" />
+            <circle cx="200" cy="200" r="106" fill="none" stroke={secondary} strokeWidth="3.5" />
+          </g>
+          {!isReduced ? (
+            <g className="nexus-anim-ember" style={{ transformOrigin: '200px 200px' }}>
+              {[78, 124, 168, 232, 276, 320].map((x, idx) => (
+                <polygon
+                  key={idx}
+                  points={`${x},250 ${x + 6},264 ${x},278 ${x - 6},264`}
+                  fill={idx % 2 === 0 ? primary : accent}
+                />
+              ))}
+            </g>
+          ) : null}
+        </g>
+      );
+
+    case 'BRAISE_INVERSION':
+      return (
+        <g className="nexus-anim-spin-ccw" style={{ transformOrigin: '200px 200px' }}>
+          <path d="M 96,170 A 106,106 0 0,1 286,130" fill="none" stroke={primary} strokeWidth="6" strokeLinecap="round" />
+          <polygon points="298,118 296,154 266,136" fill={accent} />
+          <path d="M 304,230 A 106,106 0 0,1 114,270" fill="none" stroke={secondary} strokeWidth="6" strokeLinecap="round" />
+          <polygon points="102,282 104,246 134,264" fill={primary} />
+          {!isReduced ? (
+            <circle cx="200" cy="200" r="138" fill="none" stroke={primary} strokeWidth="1.5" strokeDasharray="10 12" />
+          ) : null}
+        </g>
+      );
+
+    case 'BRAISE_BOUCLIER':
+      return (
+        <g className="nexus-special-lock" style={{ transformOrigin: '200px 200px' }}>
+          <path d="M 88,248 L 88,150 L 200,72 L 312,150 L 312,248 L 200,326 Z" fill={primary} fillOpacity="0.14" stroke={primary} strokeWidth="4.5" />
+          <polyline points="122,162 200,108 278,162" fill="none" stroke={accent} strokeWidth="3.5" />
+          <polyline points="122,238 200,292 278,238" fill="none" stroke={secondary} strokeWidth="3.5" />
+        </g>
+      );
+
+    case 'ONDE_IMPULSION':
+      return (
+        <g className="nexus-special-vector" style={{ transformOrigin: '200px 200px' }}>
+          <path d="M 52,216 Q 126,128 200,174 T 348,138" fill="none" stroke={accent} strokeWidth="4.5" strokeLinecap="round" />
+          <path d="M 68,248 Q 134,166 200,206 T 332,174" fill="none" stroke={primary} strokeWidth="3.5" strokeLinecap="round" />
+          {!isReduced ? (
+            <path d="M 86,278 Q 144,204 200,238 T 314,210" fill="none" stroke={secondary} strokeWidth="2.5" strokeLinecap="round" />
+          ) : null}
+        </g>
+      );
+
+    case 'ONDE_INVERSION':
+      return (
+        <g className="nexus-anim-spin-ccw" style={{ transformOrigin: '200px 200px' }}>
+          <circle cx="200" cy="200" r="118" fill="none" stroke={primary} strokeWidth="3" strokeDasharray="48 16" />
+          <path d="M 96,200 C 128,136 168,136 200,200 C 232,264 272,264 304,200" fill="none" stroke={accent} strokeWidth="4" strokeLinecap="round" />
+          {!isReduced ? (
+            <path d="M 96,200 C 128,264 168,264 200,200 C 232,136 272,136 304,200" fill="none" stroke={secondary} strokeWidth="3" strokeLinecap="round" />
+          ) : null}
+        </g>
+      );
+
+    case 'ONDE_BOUCLIER':
+      return (
+        <g className="nexus-special-lock" style={{ transformOrigin: '200px 200px' }}>
+          <circle cx="200" cy="200" r="134" fill="none" stroke={primary} strokeWidth="3.5" />
+          <circle cx="200" cy="200" r="106" fill={primary} fillOpacity="0.1" stroke={secondary} strokeWidth="2.5" strokeDasharray="24 8" />
+          {!isReduced ? (
+            <circle cx="200" cy="200" r="78" fill="none" stroke={accent} strokeWidth="2" />
+          ) : null}
+        </g>
+      );
+
+    case 'OMBRE_IMPULSION':
+      return (
+        <g className="nexus-special-vector" style={{ transformOrigin: '200px 200px' }}>
+          <path d="M 92,286 L 308,114" stroke={accent} strokeWidth="4.5" strokeLinecap="round" />
+          <path d="M 226,104 A 96,96 0 1,0 226,296 A 70,82 0 1,1 226,104 Z" fill={primary} fillOpacity="0.34" stroke={secondary} strokeWidth="2.5" />
+        </g>
+      );
+
+    case 'OMBRE_INVERSION':
+      return (
+        <g>
+          <g className="nexus-anim-spin-ccw" style={{ transformOrigin: '200px 200px' }}>
+            <path d="M 110,164 A 96,96 0 0,1 290,164" fill="none" stroke={primary} strokeWidth="5" strokeLinecap="round" />
+            <path d="M 290,236 A 96,96 0 0,1 110,236" fill="none" stroke={accent} strokeWidth="4" strokeLinecap="round" />
+          </g>
+          {!isReduced ? (
+            <g className="nexus-anim-spin-cw" style={{ transformOrigin: '200px 200px' }}>
+              <circle cx="200" cy="200" r="128" fill="none" stroke={secondary} strokeWidth="2" strokeDasharray="18 14" />
+            </g>
+          ) : null}
+        </g>
+      );
+
+    case 'OMBRE_BOUCLIER':
+      return (
+        <g className="nexus-special-lock" style={{ transformOrigin: '200px 200px' }}>
+          <circle cx="200" cy="200" r="126" fill={primary} fillOpacity="0.16" stroke={primary} strokeWidth="4" />
+          <path d="M 218,116 A 84,84 0 1,0 218,284 A 62,72 0 1,1 218,116 Z" fill={primary} fillOpacity="0.42" stroke={accent} strokeWidth="2.2" />
+        </g>
+      );
+
+    case 'ECLAIR_IMPULSION':
+      return (
+        <g className="nexus-anim-shock" style={{ transformOrigin: '200px 200px' }}>
+          <polyline
+            points="222,36 162,152 216,152 164,344 246,196 190,196"
+            fill="none"
+            stroke={accent}
+            strokeWidth="5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          {!isReduced ? (
+            <>
+              <polyline points="72,118 134,162 114,186 174,218" fill="none" stroke={primary} strokeWidth="3" strokeLinecap="round" />
+              <polyline points="328,122 264,164 282,188 228,224" fill="none" stroke={secondary} strokeWidth="3" strokeLinecap="round" />
+            </>
+          ) : null}
+        </g>
+      );
+
+    case 'ECLAIR_INVERSION':
+      return (
+        <g className="nexus-anim-spin-cw" style={{ transformOrigin: '200px 200px' }}>
+          <polyline points="104,138 158,86 242,86 296,138" fill="none" stroke={primary} strokeWidth="4" strokeLinejoin="round" />
+          <polyline points="296,262 242,314 158,314 104,262" fill="none" stroke={accent} strokeWidth="4" strokeLinejoin="round" />
+          <polygon points="308,148 282,146 296,120" fill={secondary} />
+          <polygon points="92,252 118,254 104,280" fill={accent} />
+        </g>
+      );
+
+    case 'ECLAIR_BOUCLIER':
+      return (
+        <g className="nexus-special-lock" style={{ transformOrigin: '200px 200px' }}>
+          <polygon points="200,56 322,128 322,272 200,344 78,272 78,128" fill={primary} fillOpacity="0.1" stroke={primary} strokeWidth="4" />
+          <polyline points="104,146 200,92 296,146 296,254 200,308 104,254 104,146" fill="none" stroke={accent} strokeWidth="2.2" strokeDasharray="14 6" />
+        </g>
+      );
+
+    case 'CRISTAL_IMPULSION':
+      return (
+        <g className="nexus-special-vector" style={{ transformOrigin: '200px 200px' }}>
+          <polygon points="200,38 226,136 200,162 174,136" fill={primary} fillOpacity="0.55" stroke={accent} strokeWidth="2.5" />
+          <polygon points="94,104 170,158 148,182 88,128" fill={secondary} fillOpacity="0.45" stroke={accent} strokeWidth="2" />
+          <polygon points="306,104 252,182 230,158 312,128" fill={secondary} fillOpacity="0.45" stroke={accent} strokeWidth="2" />
+        </g>
+      );
+
+    case 'CRISTAL_INVERSION':
+      return (
+        <g className="nexus-anim-spin-cw" style={{ transformOrigin: '200px 200px' }}>
+          <polygon points="200,54 328,200 200,346 72,200" fill="none" stroke={primary} strokeWidth="3.5" />
+          <polygon points="200,96 286,200 200,304 114,200" fill={primary} fillOpacity="0.16" stroke={accent} strokeWidth="2.5" />
+          <line x1="200" y1="54" x2="200" y2="346" stroke={secondary} strokeWidth="2" />
+          <line x1="72" y1="200" x2="328" y2="200" stroke={secondary} strokeWidth="2" />
+        </g>
+      );
+
+    case 'CRISTAL_BOUCLIER':
+      return (
+        <g className="nexus-special-lock" style={{ transformOrigin: '200px 200px' }}>
+          <polygon points="200,58 316,124 316,276 200,342 84,276 84,124" fill={primary} fillOpacity="0.14" stroke={primary} strokeWidth="4" />
+          <polygon points="200,92 284,200 200,308 116,200" fill="none" stroke={accent} strokeWidth="2.5" />
+          <line x1="84" y1="124" x2="316" y2="276" stroke={secondary} strokeWidth="1.6" strokeOpacity="0.7" />
+          <line x1="316" y1="124" x2="84" y2="276" stroke={secondary} strokeWidth="1.6" strokeOpacity="0.7" />
         </g>
       );
   }
 }
 
-function renderEffectGeometry(
-  step: AnimationStep,
-  isReduced: boolean,
+function renderSpecialScene(
+  choreo: ActiveSpecialChoreography,
+  targetPlayerName: string | null | undefined,
 ): React.ReactElement {
-  if (step.kind === 'CARD_PLAY_FAMILY' && step.family && step.familyVisual) {
-    return renderFamilyPatternSvg(step.family, step.familyVisual, isReduced);
-  }
+  const { signature, chosenFamily, level, penaltyCount } = choreo;
+  const isReduced = level === 'REDUCED';
+  const spec = resolveCardVisualSpec(signature.variantId);
+  const chosenDef = chosenFamily ? FAMILIES_BY_ID[chosenFamily] : null;
+  const accentColor =
+    signature.id === 'UNIVERSAL_PORTAIL' && chosenDef
+      ? chosenDef.primaryColor
+      : signature.primaryColor;
+  const secondaryColor =
+    signature.id === 'UNIVERSAL_PORTAIL' && chosenDef
+      ? chosenDef.secondaryColor
+      : signature.secondaryColor;
 
-  switch (step.kind) {
-    case 'DEAL_HAND':
-      return (
-        <g className="nexus-anim-deal" style={{ transformOrigin: '160px 160px' }}>
-          {[-28, 0, 28].map((offset, idx) => (
-            <rect
-              key={idx}
-              x={134 + offset}
-              y={114 + Math.abs(offset) * 0.2}
-              width="52"
-              height="78"
-              rx="6"
-              fill="#0B132B"
-              stroke="#38BDF8"
-              strokeWidth="2.5"
-              transform={`rotate(${offset * 0.45} 160 160)`}
-            />
-          ))}
-        </g>
-      );
-
-    case 'CARD_DRAW':
-      return (
-        <g className="nexus-anim-burst" style={{ transformOrigin: '160px 160px' }}>
-          <rect
-            x="130"
-            y="112"
-            width="60"
-            height="90"
-            rx="7"
-            fill="none"
-            stroke="#7DD3FC"
-            strokeWidth="3"
-          />
-          <path
-            d="M 160,136 L 160,184 M 142,166 L 160,186 L 178,166"
-            fill="none"
-            stroke="#E0F2FE"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
-      );
-
-    case 'IMPULSION_STRIKE':
-    case 'SURCHARGE_OVERLOAD': {
-      const isSurcharge = step.kind === 'SURCHARGE_OVERLOAD';
-      const stroke = isSurcharge ? '#F43F5E' : '#FB923C';
-      return (
-        <g className="nexus-anim-shock" style={{ transformOrigin: '160px 160px' }}>
-          <circle cx="160" cy="160" r="88" fill="none" stroke={stroke} strokeWidth="5" />
-          <circle
-            cx="160"
-            cy="160"
-            r="56"
-            fill="none"
-            stroke="#FDE68A"
-            strokeWidth="3"
-            strokeDasharray="12 6"
-          />
-          <text
-            x="160"
-            y="174"
-            textAnchor="middle"
-            fill="#FFFFFF"
-            fontSize="44"
-            fontWeight="800"
-            fontFamily="'Outfit', sans-serif"
+  return (
+    <div
+      key={choreo.id}
+      data-testid="animation-overlay"
+      data-animation-kind={signature.id}
+      data-animation-family={chosenFamily ?? signature.family ?? 'UNIVERSAL'}
+      data-animation-level={level}
+      className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center px-4"
+      style={{ '--nexus-dur': `${choreo.durationMs}ms` } as React.CSSProperties}
+      aria-hidden="true"
+    >
+      <div className="nexus-special-stage relative flex flex-col items-center">
+        {/* Scène SVG non obstruante autour du médaillon officiel */}
+        <div className="relative flex items-center justify-center">
+          <svg
+            viewBox="0 0 400 400"
+            className="h-60 w-60 sm:h-80 sm:w-80"
+            style={{ overflow: 'visible' }}
           >
-            {isSurcharge ? '+4' : '+2'}
-          </text>
-        </g>
-      );
-    }
+            {signature.category === 'FAMILY_SPECIAL' && signature.family ? (
+              renderFamilyPowerGeometry(
+                signature.family,
+                signature.power as FamilySpecialCategory,
+                signature.primaryColor,
+                signature.secondaryColor,
+                signature.accentColor,
+                isReduced,
+              )
+            ) : signature.id === 'UNIVERSAL_SURCHARGE' ? (
+              <g className="nexus-anim-shock" style={{ transformOrigin: '200px 200px' }}>
+                <circle cx="200" cy="200" r="136" fill="none" stroke="#F43F5E" strokeWidth="4" />
+                <circle
+                  cx="200"
+                  cy="200"
+                  r="98"
+                  fill="none"
+                  stroke="#F5DEB3"
+                  strokeWidth="2.5"
+                  strokeDasharray="16 8"
+                />
+                {/* 4 vecteurs énergétiques divergents */}
+                <line x1="200" y1="34" x2="200" y2="112" stroke="#F59E0B" strokeWidth="5" strokeLinecap="round" />
+                <line x1="200" y1="288" x2="200" y2="366" stroke="#38BDF8" strokeWidth="5" strokeLinecap="round" />
+                <line x1="34" y1="200" x2="112" y2="200" stroke="#F43F5E" strokeWidth="5" strokeLinecap="round" />
+                <line x1="288" y1="200" x2="366" y2="200" stroke="#34D399" strokeWidth="5" strokeLinecap="round" />
+              </g>
+            ) : (
+              <g className="nexus-portal-gate" style={{ transformOrigin: '200px 200px' }}>
+                <ellipse
+                  cx="200"
+                  cy="200"
+                  rx="148"
+                  ry="88"
+                  fill="none"
+                  stroke={accentColor}
+                  strokeWidth="3.5"
+                  transform="rotate(-24 200 200)"
+                />
+                <ellipse
+                  cx="200"
+                  cy="200"
+                  rx="148"
+                  ry="88"
+                  fill="none"
+                  stroke={secondaryColor}
+                  strokeWidth="3"
+                  transform="rotate(24 200 200)"
+                />
+                <circle
+                  cx="200"
+                  cy="200"
+                  r="114"
+                  fill="none"
+                  stroke="#F5DEB3"
+                  strokeWidth="2"
+                  strokeDasharray="14 8"
+                />
+                <path
+                  d="M 148,200 C 148,170 176,170 200,200 C 224,230 252,230 252,200 C 252,170 224,170 200,200 C 176,230 148,230 148,200 Z"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
+              </g>
+            )}
+          </svg>
 
-    case 'INVERSION_LOOP':
-      return (
-        <g className="nexus-anim-spin-ccw" style={{ transformOrigin: '160px 160px' }}>
-          <path
-            d="M 92,140 A 72,72 0 0,1 224,124"
-            fill="none"
-            stroke="#38BDF8"
-            strokeWidth="7"
-            strokeLinecap="round"
-          />
-          <polygon points="234,112 232,146 204,130" fill="#38BDF8" />
-          <path
-            d="M 228,180 A 72,72 0 0,1 96,196"
-            fill="none"
-            stroke="#F59E0B"
-            strokeWidth="7"
-            strokeLinecap="round"
-          />
-          <polygon points="86,208 88,174 116,190" fill="#F59E0B" />
-        </g>
-      );
-
-    case 'BOUCLIER_LOCK':
-      return (
-        <g className="nexus-anim-shock" style={{ transformOrigin: '160px 160px' }}>
-          <polygon
-            points="160,58 242,102 242,202 160,262 78,202 78,102"
-            fill="#0EA5E9"
-            fillOpacity="0.16"
-            stroke="#38BDF8"
-            strokeWidth="4.5"
-          />
-          <rect x="136" y="148" width="48" height="38" rx="6" fill="#E0F2FE" />
-          <path
-            d="M 144,148 L 144,132 A 16,16 0 0,1 176,132 L 176,148"
-            fill="none"
-            stroke="#E0F2FE"
-            strokeWidth="6.5"
-          />
-        </g>
-      );
-
-    case 'PORTAL_RESONANCE': {
-      const color = step.familyVisual?.primaryColor ?? '#38BDF8';
-      const secondary = step.familyVisual?.secondaryColor ?? '#F3D58D';
-      return (
-        <g className="nexus-anim-spin-cw" style={{ transformOrigin: '160px 160px' }}>
-          <circle cx="160" cy="160" r="108" fill="none" stroke={color} strokeWidth="4" />
-          <circle
-            cx="160"
-            cy="160"
-            r="74"
-            fill="none"
-            stroke={secondary}
-            strokeWidth="3.5"
-            strokeDasharray="14 8"
-          />
-          <path
-            d="M 118,160 C 118,136 142,136 160,160 C 178,184 202,184 202,160 C 202,136 178,136 160,160 C 142,184 118,184 118,160 Z"
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth="6"
-            strokeLinecap="round"
-          />
-        </g>
-      );
-    }
-
-    case 'NEXUS_CALL':
-    case 'NEXUS_PENALTY':
-    case 'VICTORY_PULSE': {
-      const ringColor =
-        step.kind === 'NEXUS_PENALTY'
-          ? '#EF4444'
-          : step.kind === 'VICTORY_PULSE'
-            ? '#10B981'
-            : '#F59E0B';
-      return (
-        <g className="nexus-anim-burst" style={{ transformOrigin: '160px 160px' }}>
-          <circle cx="160" cy="160" r="96" fill="none" stroke={ringColor} strokeWidth="4.5" />
-          <polygon
-            points="160,72 182,138 248,160 182,182 160,248 138,182 72,160 138,138"
-            fill={ringColor}
-            fillOpacity="0.24"
-            stroke="#FFFFFF"
-            strokeWidth="2.5"
-          />
-        </g>
-      );
-    }
-
-    default:
-      return <g />;
-  }
+          {/* Médaillon central translucide mettant en valeur l'illustration et le symbole officiel */}
+          <div
+            className="absolute flex items-center gap-3 border bg-[#050A18]/88 px-3 py-2 shadow-2xl backdrop-blur-sm nexus-chamfer-sm"
+            style={{ borderColor: accentColor }}
+          >
+            <img
+              src={spec.artwork.publicPath}
+              alt=""
+              className="h-14 w-10 rounded-sm object-cover opacity-95 ring-1 ring-white/20"
+            />
+            <div className="min-w-0 text-left">
+              <div className="flex items-center gap-1.5">
+                {signature.family || chosenFamily ? (
+                  <svg viewBox="-46 -46 92 92" className="h-5 w-5 shrink-0">
+                    <FamilyEmblemGlyph
+                      family={(chosenFamily ?? signature.family)!}
+                      color={accentColor}
+                      accentColor={secondaryColor}
+                    />
+                  </svg>
+                ) : null}
+                <span className="font-['Outfit'] text-xs font-extrabold tracking-wide text-white uppercase sm:text-sm">
+                  {signature.title}
+                </span>
+              </div>
+              <div className="mt-0.5 text-[11px] font-semibold text-slate-300">
+                {signature.id === 'UNIVERSAL_PORTAIL' && chosenDef
+                  ? `Nouvelle famille : ${chosenDef.displayName}`
+                  : penaltyCount && targetPlayerName
+                    ? `${targetPlayerName} : +${penaltyCount} cartes`
+                    : signature.power === 'BOUCLIER' && targetPlayerName
+                      ? `${targetPlayerName} bloqué`
+                      : signature.power === 'INVERSION'
+                        ? 'Sens de jeu inversé'
+                        : spec.headerLabel}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function FamilyEffectOverlay({
   activeStep,
+  specialChoreography,
+  targetPlayerName,
   level,
 }: FamilyEffectOverlayProps): React.ReactElement | null {
-  if (level === 'OFF' || activeStep === null) {
+  if (level === 'OFF') {
     return null;
   }
 
+  // Priorité aux 20 chorégraphies spéciales distinctives (18 familiales + 2 universelles)
+  if (specialChoreography) {
+    return renderSpecialScene(specialChoreography, targetPlayerName);
+  }
+
+  // Sobriété des cartes numériques (0 à 9) et non-duplication avec les 20 chorégraphies spéciales
+  if (
+    !activeStep ||
+    activeStep.kind === 'CARD_PLAY_FAMILY' ||
+    activeStep.kind === 'CARD_DRAW' ||
+    activeStep.kind === 'IMPULSION_STRIKE' ||
+    activeStep.kind === 'SURCHARGE_OVERLOAD' ||
+    activeStep.kind === 'INVERSION_LOOP' ||
+    activeStep.kind === 'BOUCLIER_LOCK' ||
+    activeStep.kind === 'PORTAL_RESONANCE'
+  ) {
+    return null;
+  }
+
+  // Événements système discrets (Distribution, Déclaration NEXUS, Pénalité NEXUS, Fin de partie)
   const isReduced = level === 'REDUCED';
+  const ringColor =
+    activeStep.kind === 'NEXUS_PENALTY'
+      ? '#F43F5E'
+      : activeStep.kind === 'VICTORY_PULSE'
+        ? '#10B981'
+        : activeStep.kind === 'NEXUS_CALL'
+          ? '#F5DEB3'
+          : '#38BDF8';
 
   return (
     <div
@@ -444,14 +460,32 @@ export function FamilyEffectOverlay({
       aria-hidden="true"
     >
       <div className="relative flex flex-col items-center justify-center">
-        <svg
-          viewBox="0 0 320 320"
-          className="h-56 w-56 sm:h-72 sm:w-72"
-          style={{ overflow: 'visible' }}
-        >
-          {renderEffectGeometry(activeStep, isReduced)}
+        <svg viewBox="0 0 320 320" className="h-44 w-44 sm:h-56 sm:w-56" style={{ overflow: 'visible' }}>
+          {activeStep.kind === 'DEAL_HAND' ? (
+            <g className="nexus-anim-deal" style={{ transformOrigin: '160px 160px' }}>
+              {(isReduced ? [0] : [-26, 0, 26]).map((offset, idx) => (
+                <rect
+                  key={idx}
+                  x={136 + offset}
+                  y={116 + Math.abs(offset) * 0.2}
+                  width="48"
+                  height="72"
+                  rx="6"
+                  fill="#070E22"
+                  stroke="#38BDF8"
+                  strokeWidth="2"
+                  transform={`rotate(${offset * 0.45} 160 160)`}
+                />
+              ))}
+            </g>
+          ) : (
+            <g className="nexus-anim-burst" style={{ transformOrigin: '160px 160px' }}>
+              <circle cx="160" cy="160" r="84" fill="none" stroke={ringColor} strokeWidth="3.5" />
+              <circle cx="160" cy="160" r="56" fill="none" stroke="#F5DEB3" strokeWidth="1.5" strokeDasharray="10 8" />
+            </g>
+          )}
         </svg>
-        <div className="nexus-anim-label -mt-6 rounded-md border border-slate-700/80 bg-[#050A18]/90 px-3 py-1 text-xs font-semibold tracking-wide text-slate-100 shadow-lg">
+        <div className="nexus-anim-label -mt-4 border border-slate-700/80 bg-[#050A18]/92 px-3.5 py-1 text-xs font-bold tracking-wide text-slate-100 shadow-lg nexus-chamfer-sm">
           {activeStep.label}
         </div>
       </div>

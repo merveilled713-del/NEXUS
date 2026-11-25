@@ -10,7 +10,13 @@ import { RulesScreen } from './components/RulesScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { SoloSetupScreen } from './components/SoloSetupScreen';
 import { StatsScreen } from './components/StatsScreen';
+import {
+  extractTableChoreography,
+  type ActiveSpecialChoreography,
+  type CardFlightSpec,
+} from './components/table/specialAnimationCatalog';
 import { TitleScreen } from './components/TitleScreen';
+import { NexusUiProvider } from './components/ui/NexusUiContext';
 import type { GameEvent, PlayerView } from './engine/gameTypes';
 import {
   applyMatchOutcomeToProgression,
@@ -104,6 +110,14 @@ export default function App(): React.ReactElement {
   const [animQueue, setAnimQueue] = useState<readonly AnimationStep[]>([]);
   const [activeAnimationStep, setActiveAnimationStep] = useState<AnimationStep | null>(null);
 
+  const [flightQueue, setFlightQueue] = useState<readonly CardFlightSpec[]>([]);
+  const [activeFlight, setActiveFlight] = useState<CardFlightSpec | null>(null);
+  const [specialQueue, setSpecialQueue] = useState<readonly ActiveSpecialChoreography[]>([]);
+  const [activeSpecialChoreography, setActiveSpecialChoreography] =
+    useState<ActiveSpecialChoreography | null>(null);
+  const [numericPulseKey, setNumericPulseKey] = useState<string | null>(null);
+  const [landingPulseKey, setLandingPulseKey] = useState<string | null>(null);
+
   // Sync audio configuration
   useEffect(() => {
     soundEngine.configure({
@@ -118,6 +132,12 @@ export default function App(): React.ReactElement {
     if (settings.animationLevel === 'OFF') {
       setAnimQueue([]);
       setActiveAnimationStep(null);
+      setFlightQueue([]);
+      setActiveFlight(null);
+      setSpecialQueue([]);
+      setActiveSpecialChoreography(null);
+      setNumericPulseKey(null);
+      setLandingPulseKey(null);
     }
   }, [settings.animationLevel]);
 
@@ -150,6 +170,17 @@ export default function App(): React.ReactElement {
         const steps = mapEventsToAnimationSteps(events, settings.animationLevel);
         if (steps.length > 0) {
           setAnimQueue((prev) => [...prev, ...steps]);
+        }
+
+        const choreo = extractTableChoreography(events, settings.animationLevel);
+        if (choreo.flights.length > 0) {
+          setFlightQueue((prev) => [...prev, ...choreo.flights]);
+        }
+        if (choreo.specials.length > 0) {
+          setSpecialQueue((prev) => [...prev, ...choreo.specials]);
+        }
+        if (choreo.numericPulseFamily) {
+          setNumericPulseKey(`${choreo.numericPulseFamily}-${Date.now()}`);
         }
       }
     },
@@ -187,6 +218,43 @@ export default function App(): React.ReactElement {
     return () => window.clearTimeout(timer);
   }, [activeAnimationStep]);
 
+  // Process visual card flights without slowing down the engine
+  useEffect(() => {
+    if (settings.animationLevel === 'OFF') return;
+    if (activeFlight !== null || flightQueue.length === 0) return;
+    const [next, ...rest] = flightQueue;
+    setActiveFlight(next);
+    setFlightQueue(rest);
+  }, [flightQueue, activeFlight, settings.animationLevel]);
+
+  useEffect(() => {
+    if (!activeFlight) return;
+    const timer = window.setTimeout(() => {
+      if (activeFlight.kind === 'PLAY') {
+        setLandingPulseKey(activeFlight.id);
+      }
+      setActiveFlight(null);
+    }, activeFlight.durationMs);
+    return () => window.clearTimeout(timer);
+  }, [activeFlight]);
+
+  // Process 20-signature special choreographies without slowing down the engine
+  useEffect(() => {
+    if (settings.animationLevel === 'OFF') return;
+    if (activeSpecialChoreography !== null || specialQueue.length === 0) return;
+    const [next, ...rest] = specialQueue;
+    setActiveSpecialChoreography(next);
+    setSpecialQueue(rest);
+  }, [specialQueue, activeSpecialChoreography, settings.animationLevel]);
+
+  useEffect(() => {
+    if (!activeSpecialChoreography) return;
+    const timer = window.setTimeout(() => {
+      setActiveSpecialChoreography(null);
+    }, activeSpecialChoreography.durationMs);
+    return () => window.clearTimeout(timer);
+  }, [activeSpecialChoreography]);
+
   const startSoloMatch = useCallback(
     (matchSetup: SoloMatchSetup = setup) => {
       if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
@@ -206,6 +274,12 @@ export default function App(): React.ReactElement {
       setTurnsPlayed(0);
       setAnimQueue([]);
       setActiveAnimationStep(null);
+      setFlightQueue([]);
+      setActiveFlight(null);
+      setSpecialQueue([]);
+      setActiveSpecialChoreography(null);
+      setNumericPulseKey(null);
+      setLandingPulseKey(null);
 
       enqueueEventsFeedback(initialEvents, view);
     },
@@ -387,13 +461,26 @@ export default function App(): React.ReactElement {
     saveProgressionStats(fresh);
   };
 
+  const screenTransitionClass =
+    settings.animationLevel === 'FULL'
+      ? 'nexus-screen-transition-full'
+      : settings.animationLevel === 'REDUCED'
+        ? 'nexus-screen-transition-reduced'
+        : '';
+
+  let activeView: React.ReactElement;
+
   if (screen === 'TABLE' && humanView) {
-    return (
+    activeView = (
       <GameTableScreen
         view={humanView}
         settings={settings}
         paused={paused}
         activeAnimationStep={activeAnimationStep}
+        activeFlight={activeFlight}
+        activeSpecialChoreography={activeSpecialChoreography}
+        numericPulseKey={numericPulseKey}
+        landingPulseKey={landingPulseKey}
         actionLog={actionLog}
         statusFeedback={statusFeedback}
         newlyUnlockedAchievements={newlyUnlocked}
@@ -417,10 +504,8 @@ export default function App(): React.ReactElement {
         }}
       />
     );
-  }
-
-  if (screen === 'SOLO_SETUP') {
-    return (
+  } else if (screen === 'SOLO_SETUP') {
+    activeView = (
       <SoloSetupScreen
         setup={setup}
         onChangeSetup={setSetup}
@@ -431,10 +516,8 @@ export default function App(): React.ReactElement {
         }}
       />
     );
-  }
-
-  if (screen === 'SETTINGS') {
-    return (
+  } else if (screen === 'SETTINGS') {
+    activeView = (
       <SettingsScreen
         settings={settings}
         onUpdateSettings={setSettings}
@@ -447,10 +530,8 @@ export default function App(): React.ReactElement {
         returnToTableAvailable={humanView !== null}
       />
     );
-  }
-
-  if (screen === 'RULES') {
-    return (
+  } else if (screen === 'RULES') {
+    activeView = (
       <RulesScreen
         onNavigate={(next) => {
           soundEngine.play('UI_CLICK');
@@ -460,10 +541,8 @@ export default function App(): React.ReactElement {
         returnToTableAvailable={humanView !== null}
       />
     );
-  }
-
-  if (screen === 'COLLECTION') {
-    return (
+  } else if (screen === 'COLLECTION') {
+    activeView = (
       <CollectionScreen
         glowEnabled={settings.glowEnabled}
         stats={stats}
@@ -476,12 +555,22 @@ export default function App(): React.ReactElement {
         }}
       />
     );
-  }
-
-  if (screen === 'STATS') {
-    return (
+  } else if (screen === 'STATS') {
+    activeView = (
       <StatsScreen
         stats={stats}
+        onNavigate={(next) => {
+          soundEngine.play('UI_CLICK');
+          setScreen(next);
+        }}
+      />
+    );
+  } else {
+    activeView = (
+      <TitleScreen
+        glowEnabled={settings.glowEnabled}
+        stats={stats}
+        onQuickStartSolo={() => startSoloMatch(setup)}
         onNavigate={(next) => {
           soundEngine.play('UI_CLICK');
           setScreen(next);
@@ -491,14 +580,16 @@ export default function App(): React.ReactElement {
   }
 
   return (
-    <TitleScreen
-      glowEnabled={settings.glowEnabled}
-      stats={stats}
-      onQuickStartSolo={() => startSoloMatch(setup)}
-      onNavigate={(next) => {
-        soundEngine.play('UI_CLICK');
-        setScreen(next);
+    <NexusUiProvider
+      value={{
+        animationLevel: settings.animationLevel,
+        glowEnabled: settings.glowEnabled,
+        tableTheme: settings.tableTheme,
       }}
-    />
+    >
+      <div key={screen} className={screenTransitionClass}>
+        {activeView}
+      </div>
+    </NexusUiProvider>
   );
 }
